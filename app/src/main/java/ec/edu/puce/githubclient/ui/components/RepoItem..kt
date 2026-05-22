@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,55 +18,50 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import ec.edu.puce.githubclient.models.GithubUser
+import ec.edu.puce.githubclient.models.Repository
 import ec.edu.puce.githubclient.ui.theme.GithubClientTheme
 
 @Composable
-fun RepoItem (
-    name: String,
-    description: String,
-    avatarUrl: String,
-    language: String
+fun RepoItem(
+    repository: Repository
 ) {
-    Card (
+    Card(
         modifier = Modifier
-            .padding( all = 8.dp )
+            .padding(8.dp)
             .fillMaxWidth()
     ) {
-        Row (
+        Row(
             modifier = Modifier
-                .padding( all = 16.dp )
+                .padding(all = 16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
-
         ) {
             AsyncImage(
-                model = avatarUrl,
-                contentDescription = "Imagen de repositorio \"$name\"",
+                model = repository.owner?.avatarUrl,
+                contentDescription = "Imagen de repositorio \"${repository.name}\"",
                 modifier = Modifier.size(60.dp),
                 contentScale = ContentScale.Crop
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Spacer(modifier = Modifier.width(width = 16.dp))
+            Column(modifier = Modifier.weight(weight = 1f)) {
                 Text(
-                    text = name,
+                    text = repository.name,
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (description.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(height = 4.dp))
+
+                repository.description?.let {
                     Text(
-                        text = description,
+                        text = it,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        maxLines = 3
                     )
                 }
-                if (language.isNotEmpty()) {
+                repository.language?.let {
                     Text(
-                        text = language,
+                        text = it,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -75,13 +71,19 @@ fun RepoItem (
 
 @Preview(showBackground = true)
 @Composable
-fun RepoItempreview(){
+fun RepoItemPreview() {
     GithubClientTheme {
-        RepoItem(
-            "Nombre del Repositorio",
-            description = "Description del respositorio",
-            avatarUrl = "https://i.pinimg.com/236x/d1/e3/d2/d1e3d2a12bc3d0221898c4391dffcfff.jpg",
-            language = "Languaje"
+        val repository = Repository(
+            id = "123",
+            name = "Nombre del repositorio",
+            description = "Descripcion del repositorio",
+            language = "kotlin",
+            owner = GithubUser(
+                id = "123",
+                login = "user",
+                avatarUrl = "https://static.vecteezy.com/system/resources/previews/077/675/681/non_2x/simple-outline-round-user-account-profile-avatar-sign-icon-vector.jpg"
+            )
         )
+        RepoItem(repository)
     }
 }
