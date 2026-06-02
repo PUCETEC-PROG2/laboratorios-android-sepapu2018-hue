@@ -1,6 +1,7 @@
 package ec.edu.puce.githubclient
 
 import android.os.Bundle
+import android.widget.ListView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import ec.edu.puce.githubclient.models.viewmodels.RepoListViewModel
 import ec.edu.puce.githubclient.ui.screens.RepoForm
 import ec.edu.puce.githubclient.ui.screens.RepoList
 import ec.edu.puce.githubclient.ui.theme.GithubClientTheme
@@ -23,12 +26,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             GithubClientTheme {
                 var currentScreen by remember { mutableStateOf("repoList") }
+                val repoListViewModel: RepoListViewModel = viewModel()
+                val formViewModel: RepoListViewModel = viewModel()
                 when (currentScreen) {
                     "repoList" -> RepoList(
                         onNavigateToForm = { currentScreen = "repoForm" }
                     )
                     "repoForm" -> RepoForm(
-                        onBackClick = { currentScreen = "repoList" }
+                        onBackClick = { currentScreen = "repoList" },
+                        onSaveSuccess = {
+                            repoListViewModel.fetchRepos()
+                            currentScreen = "repoList"
+                        }
                     )
                 }
 

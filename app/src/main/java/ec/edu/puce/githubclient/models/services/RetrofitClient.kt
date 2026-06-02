@@ -20,11 +20,17 @@ object RetrofitClient {
 
             val token = BuildConfig.GITHUB_TOKEN
 
-            val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer $token")
-                .build()
+            val requestBuilder = chain.request().newBuilder()
+                .addHeader("Cache-Control", "no-cache, no-store, must-revalidate")
+                .addHeader("Pragma", "no-cache")
+                .addHeader("Expires", "0")
+                .addHeader("Connection", "close")
 
-            chain.proceed(request)
+            if (token.isNotEmpty()) {
+                requestBuilder.addHeader("Authorization", "Bearer $token")
+            }
+
+            chain.proceed(requestBuilder.build())
         }
         .build()
 
