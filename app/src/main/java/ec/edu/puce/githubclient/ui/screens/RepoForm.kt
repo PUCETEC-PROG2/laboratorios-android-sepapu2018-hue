@@ -34,18 +34,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ec.edu.puce.githubclient.models.viewmodels.RepoFormViewModel
+import ec.edu.puce.githubclient.models.Repository
+import ec.edu.puce.githubclient.viewmodels.RepoFormViewModel
 import ec.edu.puce.githubclient.ui.theme.GithubClientTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RepoForm(
+    repoToEdit: Repository? = null, // Recibe el repositorio desde la MainActivity
     onBackClick: () -> Unit = {},
     onSaveSuccess: () -> Unit = {},
     viewModel: RepoFormViewModel = viewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+
+    // Guarda el nombre actual de GitHub para poder hacer el PATCH correctamente aunque se modifique la caja de texto
+    var originalRepoName by remember { mutableStateOf("") }
+    var isEditMode by remember { mutableStateOf(false) }
+
+    // Al cargar la pantalla, evalúa si viene de un clic en editar o es uno nuevo
+    LaunchedEffect(repoToEdit) {
+        if (repoToEdit != null) {
+            name = repoToEdit.name
+            description = repoToEdit.description ?: ""
+            originalRepoName = repoToEdit.name // Llave primaria para el PATCH
+            isEditMode = true
+        } else {
+            name = ""
+            description = ""
+            originalRepoName = ""
+            isEditMode = false
+        }
+    }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val isSuccess by viewModel.isSuccess.collectAsState()
@@ -61,7 +82,7 @@ fun RepoForm(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Formulario de repositorio") },
+                title = { Text(text = if (isEditMode) "Editar Repositorio" else "Formulario de repositorio") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -92,7 +113,7 @@ fun RepoForm(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(text = "Nombre de Laboratorio 4") },
+                    label = { Text(text = "Nombre del repositorio") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -113,8 +134,34 @@ fun RepoForm(
                     )
                 }
                 Spacer(modifier = Modifier.height(height = 10.dp))
+
                 Button(
-                    onClick = { viewModel.createRepository(name, description) },
+                    onClick = {
+                        val trimmedName = name.trim()
+
+                        if (trimmedName.isBlank()) {
+                            return@Button
+                        }
+
+                        // Evita eliminar mis debres jsjs  de base de datos o tesis
+                        if (trimmedName.equals("MotoNation", ignoreCase = true) ||
+                            trimmedName.equals("coffeestock", ignoreCase = true)) {
+                            return@Button
+                        }
+
+                        if (isEditMode && originalRepoName.isNotBlank()) {
+                            // MODO EDICIÓN REAL (PATCH)
+                            viewModel.updateRepository(
+                                owner = "sepapu2018-hue",
+                                repoName = originalRepoName, // Nombre viejo actual en GitHub
+                                name = trimmedName,          // Nuevo nombre editado
+                                description = description
+                            )
+                        } else {
+                            // modo creacion para (POST)
+                            viewModel.createRepository(trimmedName, description)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(
@@ -122,7 +169,7 @@ fun RepoForm(
                         contentDescription = "Guardar"
                     )
                     Spacer(modifier = Modifier.width(width = 8.dp))
-                    Text(text = "Guardar")
+                    Text(text = if (isEditMode) "Actualizar" else "Guardar")
                 }
             }
         }
